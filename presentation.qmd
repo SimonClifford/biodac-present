@@ -410,7 +410,6 @@ So if splitting on 4 axes we'll have up to 80 neighbours!
 ::: {.notes}
 Notes here
 :::
-Do everything ourselves:
 ``` {.python}
 # data_array is dict[t_chunk, z_chunk, y_chunk, x_chunk] = block
 data_array = load_chunks_from_czi(filename, chunk_sizes, overlaps,
@@ -439,7 +438,18 @@ final_result = [
 Notes here
 :::
 ::: {.r-stack}
-![](images/self-overlap.svg){width="40pc"}
+![](images/self-overlap.svg){width="35pc"}
+:::
+
+## Running on CSD3
+::: {.notes}
+Notes here
+:::
+::: {.incremental}
+* We choose our chunk size based on a node's memory.
+  * For our file the chunks are `T:17 C:1 Z:1501 Y:512 X:484`,
+    with overlaps of 16 pixels in X and Y.
+    * Memory required to denoise one chunk: 200GiB.
 :::
 
 ## Running on CSD3
@@ -453,13 +463,6 @@ Notes here
   * Submit a job of $N$ tasks using usual queue system, dask takes parameters
     from queue system.
     * Dask starts a Client, a Scheduler, and $N-2$ Workers.
-* We choose our chunk size based on a node's memory.
-  * For our file the chunks are `T:17 C:1 Z:1501 Y:512 X:484`,
-    with overlaps of 16 pixels in X and Y.
-    * Memory required for denoise: 200GiB.
-:::
-::: {.footer}
-1. https://jobqueue.dask.org
 :::
 
 ## Running on CSD3
