@@ -69,7 +69,8 @@ Notes here
 * Uses OMP parallelism, scales well.
 * Memory requirement is ***6 times*** the image size...
   * ... in floats.
-    * So our image needs $2\times6\times202\times10^9$ bytes,
+    * So our image needs
+      $2\times6\times202\times10^9$ bytes,
       so 2.204TiB memory.
 * So we will divide image into chunks.
 :::
