@@ -36,7 +36,8 @@ Notes here
 
 ## Denoising Algorithm{auto-animate=true}
 ::: {.notes}
-Notes here
+* Image will extend into several axes, e.g. time, X, Y, Z, possibly others.
+* Just using a 2D example here.
 :::
 ::: {.r-stack}
 ![](images/gridded_square.svg){width="40pc"}
@@ -44,7 +45,7 @@ Notes here
 
 ## Denoising Algorithm{auto-animate=true}
 ::: {.notes}
-Notes here
+* Divide image into patches across chosen axes.
 :::
 ::: {.r-stack}
 ![](images/patches.svg){width="40pc"}
@@ -52,7 +53,8 @@ Notes here
 
 ## Denoising Algorithm{auto-animate=true}
 ::: {.notes}
-Notes here
+* Patches are compared to neighbourhood in various axes, including time.
+* Neighbourhood increases with iteration count of algorithm.
 :::
 ::: {.r-stack}
 ![](images/neighb2.svg){width="40pc"}
@@ -74,7 +76,8 @@ Notes here
 
 ## Dask
 ::: {.notes}
-Notes here
+* And when someone mentions "chunks" we think of Dask.
+* Other available: Spark, Ray, (Modin / Rapids), etc.
 :::
 ::: {.incremental}
 * Dask is a Python library / framework for distributed computing.
@@ -363,7 +366,11 @@ Notes here
 
 ## First Approach
 ::: {.notes}
-Notes here
+* `process_block` just wraps our denoising algorithm.
+* Load `data_array` with a bunch of chunks, perhaps from a chunked file-format.
+  * It's a `da.array` so it maintains relative position of chunks to overall array.
+* Use `map_overlap` to apply function to each chunk, while accounting for some overlap (for the neighbourhood) from neighbouring blocks.
+* Dask handles all of this for us.
 :::
 ::: {.fragment .fade-in}
 ``` {.python code-line-numbers="1-10|11-20|22"}
@@ -394,21 +401,30 @@ result_array = blocked_array.compute()
 
 ## First Approach
 ::: {.notes}
-Notes here
+* When executing the code above no computation is done.  A task graph is being constructed.
+* Task graph is a DAG, mapping depdendencies between blocks and tasks.
+* Bottom part shows loading 4 chunks.
+* Top part shows saving.
+* Rest automatically generated to account for overlaps.
+* Yay!
 :::
 ![](images/map_overlap.svg)
 
 ::: {.fragment .fade-in}
 But number of neighbours scales as $3^{N_{axes}} - 1$.
 :::
-
 ::: {.fragment .fade-in}
 So if splitting on 4 axes we'll have up to 80 neighbours!
 :::
 
 ## Second Approach
 ::: {.notes}
-Notes here
+* Do everything ourselves.
+* `data_array` again loaded from some file, but now _includes_ overlaps.
+* We now are not treating as a `da.array`, just Delayed objects.
+  * So I store in dict with their "chunk index".
+* Denoising as before.
+* Then explicitly trim, then save.
 :::
 ``` {.python}
 # data_array is dict[t_chunk, z_chunk, y_chunk, x_chunk] = block
@@ -435,7 +451,7 @@ final_result = [
 
 ## Second Approach
 ::: {.notes}
-Notes here
+* Boring, but massively parallel.
 :::
 ::: {.r-stack}
 ![](images/self-overlap.svg){width="35pc"}
@@ -443,7 +459,8 @@ Notes here
 
 ## Running on CSD3
 ::: {.notes}
-Notes here
+* Icelake nodes have 256GiB (some have more).
+* 200GiB is perilously close to Dask's limits.
 :::
 ::: {.incremental}
 * We choose our chunk size based on a node's memory.
@@ -454,7 +471,12 @@ Notes here
 
 ## Running on CSD3
 ::: {.notes}
-Notes here
+* Jobqueue is either a long-running process on a
+  login node somewhere managing its cluster.
+* Or a job that submits jobs.
+* Neither tends to appeal to a typical adacemic
+  HP sysadmin.
+* JobRunner class.
 :::
 ::: {.incremental}
 * Can run using Dask-JobQueue^1^ dynamic cluster.
@@ -467,7 +489,11 @@ Notes here
 
 ## Running on CSD3
 ::: {.notes}
-Notes here
+* Example job script.
+* Effectively asking for 8 nodes exclusively.
+* This is what it took to denoise our 202GB image.
+  * 84 node hours, 84 * 76 = 6384 CPU hours.
+  * 8 * 256GiB = 2TiB.
 :::
 ``` {.bash}
 #!/bin/bash
@@ -888,7 +914,11 @@ with SLURMRunner(
 
 ## Dask gotchas
 ::: {.notes}
-Notes here
+* Over eager, will start processing nodes in graph
+  even if worker only has 1 thread.
+  * Set `dask.distributed.worker-saturation`to 1.0.
+* Release GIL so worker can occasionally update
+  Scheduler of its status.
 :::
 ::: {.incremental}
 * Dask is over-eager.
@@ -905,7 +935,7 @@ Notes here
 
 ## Results
 ::: {.notes}
-Notes here
+* Blocking.
 :::
 ::: {.r-hstack}
 ![](images/example-bad.png)
