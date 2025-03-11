@@ -920,10 +920,13 @@ with SLURMRunner(
   * Set `dask.distributed.worker-saturation`to 1.0.
 * Release GIL so worker can occasionally update
   Scheduler of its status.
+* Designed for small, quick tasks.
 :::
 ::: {.incremental}
 * Dask is over-eager.
 * Make sure your C++ code releases the GIL.
+* Not really designed for this sort of workflow
+  (although it works).
 :::
 
 ## Results
